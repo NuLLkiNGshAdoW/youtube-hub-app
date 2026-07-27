@@ -21,6 +21,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { signInWithProvider } from "@/lib/supabase/auth";
 import {
   Play,
   Trophy,
@@ -131,8 +132,11 @@ export default function HomePage() {
             <a href="#events" className="hover:text-[#E7E9EE] transition-colors">События</a>
             <a href="#backstage" className="hover:text-[#E7E9EE] transition-colors">За кулисами</a>
           </nav>
-          <button className="rounded-lg bg-white/[0.06] px-4 py-2 text-sm font-medium ring-1 ring-white/10 transition-colors hover:bg-white/[0.1]">
-            Войти
+          <button
+           onClick={() => signInWithProvider("google")}
+            className="rounded-lg bg-white/[0.06] px-4 py-2 text-sm font-medium ring-1 ring-white/10 transition-colors hover:bg-white/[0.1]"
+            >
+                Войти
           </button>
         </div>
       </header>
