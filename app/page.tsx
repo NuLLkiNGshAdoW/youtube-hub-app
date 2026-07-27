@@ -100,15 +100,21 @@ const toneMap = {
 };
 
 function useCountdown(target: Date) {
-  const [left, setLeft] = useState(() => Math.max(0, target.getTime() - Date.now()));
+  const [left, setLeft] = useState<number | null>(null); // null = ещё не на клиенте
+
   useEffect(() => {
-    const id = setInterval(() => setLeft(Math.max(0, target.getTime() - Date.now())), 1000);
+    const tick = () => setLeft(Math.max(0, target.getTime() - Date.now()));
+    tick(); // сразу выставляем значение при монтировании
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [target]);
+
+  if (left === null) return { h: 0, m: 0, s: 0, ready: false };
+
   const h = Math.floor(left / 3_600_000);
   const m = Math.floor((left % 3_600_000) / 60_000);
   const s = Math.floor((left % 60_000) / 1000);
-  return { h, m, s };
+  return { h, m, s, ready: true };
 }
 
 export default function HomePage() {
