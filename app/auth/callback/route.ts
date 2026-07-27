@@ -3,8 +3,18 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
+  const error = requestUrl.searchParams.get("error");
+  const errorDescription = requestUrl.searchParams.get("error_description");
+
+  console.log("=== 🔍 OAUTH CALLBACK DEBUG ===");
+  console.log("Full Callback URL:", request.url);
+  console.log("Received Code:", code ? "YES" : "NO");
+
+  if (error) {
+    console.error("❌ Provider Error:", error, errorDescription);
+  }
 
   if (code) {
     const cookieStore = await cookies();
@@ -21,8 +31,16 @@ export async function GET(request: Request) {
         },
       }
     );
-    await supabase.auth.exchangeCodeForSession(code);
+
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (exchangeError) {
+      console.error("❌ Exchange Code Error:", exchangeError.message);
+    } else {
+      console.log("✅ OAuth Session successfully created!");
+    }
   }
 
-  return NextResponse.redirect(`${origin}/profile`);
+  // После обмена кодом перенаправляем на главную
+  return NextResponse.redirect(`${requestUrl.origin}/`);
 }

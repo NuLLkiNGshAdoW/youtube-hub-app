@@ -118,7 +118,7 @@ function useCountdown(target: Date) {
 }
 
 export default function HomePage() {
-  const { h, m, s } = useCountdown(nextStream);
+  const { h, m, s, ready } = useCountdown(nextStream);
   const xpPct = Math.min(100, Math.round((player.xp / player.xpToNext) * 100));
 
   return (
@@ -227,14 +227,14 @@ export default function HomePage() {
             </div>
 
             <div className="my-6 flex items-baseline justify-center gap-2 font-[Space_Grotesk,sans-serif]">
-              {[[h, "ч"], [m, "м"], [s, "с"]].map(([val, unit], i) => (
-                <div key={i} className="flex flex-col items-center">
-                  <span className="text-4xl font-bold tabular-nums sm:text-5xl">
-                    {String(val).padStart(2, "0")}
-                  </span>
-                  <span className="text-xs text-[#8B93A7]">{unit}</span>
-                </div>
-              ))}
+            {[[h, "ч"], [m, "м"], [s, "с"]].map(([val, unit], i) => (
+          <div key={i} className="flex flex-col items-center">
+           <span className="text-4xl font-bold tabular-nums sm:text-5xl">
+               {ready ? String(val).padStart(2, "0") : "--"}
+             </span>
+              <span className="text-xs text-[#8B93A7]">{unit}</span>
+           </div>
+            ))}
             </div>
 
             <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#FF4D5E] py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02]">

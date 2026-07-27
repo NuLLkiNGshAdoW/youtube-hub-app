@@ -1,13 +1,10 @@
 // lib/supabase/auth.ts
-import { supabase } from "./client";
-
-export async function signInWithProvider(provider: "google" | "discord") {
-  await supabase.auth.signInWithOAuth({
-    provider,
-    options: { redirectTo: `${location.origin}/auth/callback` },
-  });
+export function signInWithProvider(provider: "google" | "discord") {
+  // Просто переходим на наш серверный эндпоинт, который корректно сохранит Cookie
+  window.location.href = `/auth/login?provider=${provider}`;
 }
 
 export async function signOut() {
+  const { supabase } = await import("./client");
   await supabase.auth.signOut();
 }
