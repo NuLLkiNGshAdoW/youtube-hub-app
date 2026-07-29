@@ -9,6 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@mui/icons-material": "^9.2.0",
+    "@mui/material": "^9.2.0",
+    "@mui/styles": "^6.5.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.8",
     "framer-motion": "^12.42.2",

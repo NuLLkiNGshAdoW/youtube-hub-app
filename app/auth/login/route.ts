@@ -1,3 +1,4 @@
+// app/api/auth/login/route.ts
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -18,15 +19,19 @@ export async function GET(request: Request) {
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) =>
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          ),
+        setAll: (cookiesToSet) => {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // Игнорируем вызовы из контекстов, где нельзя ставить куки
+          }
+        },
       },
     }
   );
 
-  // Возвращаем перенаправление на наш колбэк-роут
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {

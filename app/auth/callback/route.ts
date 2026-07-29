@@ -1,20 +1,11 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
-  const error = requestUrl.searchParams.get("error");
-  const errorDescription = requestUrl.searchParams.get("error_description");
-
-  console.log("=== 🔍 OAUTH CALLBACK DEBUG ===");
-  console.log("Full Callback URL:", request.url);
-  console.log("Received Code:", code ? "YES" : "NO");
-
-  if (error) {
-    console.error("❌ Provider Error:", error, errorDescription);
-  }
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get('code');
+  const next = searchParams.get('next') ?? '/';
 
   if (code) {
     const cookieStore = await cookies();
@@ -23,24 +14,27 @@ export async function GET(request: Request) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll: () => cookieStore.getAll(),
-          setAll: (cookiesToSet) =>
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            ),
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              );
+            } catch {
+              // Игнорируем вызов из Server Components
+            }
+          },
         },
       }
     );
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (exchangeError) {
-      console.error("❌ Exchange Code Error:", exchangeError.message);
-    } else {
-      console.log("✅ OAuth Session successfully created!");
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`);
     }
   }
 
-  // После обмена кодом перенаправляем на главную
-  return NextResponse.redirect(`${requestUrl.origin}/`);
+  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
 }
