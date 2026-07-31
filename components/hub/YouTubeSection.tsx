@@ -72,7 +72,7 @@ export function YouTubeSection() {
           <p className="text-xs text-gray-400 mt-1">Последние публикации на канале</p>
         </div>
         <a
-          href="https://www.youtube.com/@NullKinG"
+          href="https://www.youtube.com/@NuIlKinG"
           target="_blank"
           rel="noopener noreferrer"
           className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-full hover:bg-red-500/20 transition-all"
