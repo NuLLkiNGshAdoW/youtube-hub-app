@@ -28,11 +28,18 @@ export default function AdminBackstagePage() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("backstage_posts")
       .select("*")
       .order("published_at", { ascending: false });
-    setPosts((data as PostRow[]) || []);
+
+    if (error) {
+      console.error("Ошибка загрузки backstage_posts:", error);
+      setPosts([]);
+    } else {
+      setPosts((data as PostRow[]) || []);
+    }
+
     setLoading(false);
   };
 
@@ -66,9 +73,11 @@ export default function AdminBackstagePage() {
     };
 
     if (editingId) {
-      await supabase.from("backstage_posts").update(payload).eq("id", editingId);
+      const { error } = await supabase.from("backstage_posts").update(payload).eq("id", editingId);
+      if (error) console.error("Ошибка обновления поста:", error);
     } else {
-      await supabase.from("backstage_posts").insert([payload]);
+      const { error } = await supabase.from("backstage_posts").insert([payload]);
+      if (error) console.error("Ошибка создания поста:", error);
     }
 
     resetForm();
@@ -77,7 +86,8 @@ export default function AdminBackstagePage() {
 
   const remove = async (id: number) => {
     if (!confirm("Удалить пост безвозвратно?")) return;
-    await supabase.from("backstage_posts").delete().eq("id", id);
+    const { error } = await supabase.from("backstage_posts").delete().eq("id", id);
+    if (error) console.error("Ошибка удаления поста:", error);
     load();
   };
 

@@ -33,6 +33,7 @@ export default function BackstagePage() {
 
       if (error) {
         console.error("Ошибка при загрузке backstage постов:", error.message);
+        setPosts([]);
       } else if (data) {
         setPosts(data as BackstagePost[]);
       }
@@ -43,6 +44,7 @@ export default function BackstagePage() {
       }
     } catch (err) {
       console.error("Ошибка:", err);
+      setPosts([]);
     } finally {
       setLoading(false);
     }
