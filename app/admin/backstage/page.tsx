@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Plus, Trash2, Pencil, X, Check, Lock, Link as LinkIcon } from "lucide-react";
+import { ParallaxBackground } from "@/components/hub";
 
 interface PostRow {
   id: number;
@@ -107,10 +108,12 @@ export default function AdminBackstagePage() {
   };
 
   return (
-    <div className="px-2 sm:px-0">
-      <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <Lock className="w-6 h-6 text-[#F59E0B]" /> За кулисами
-      </h1>
+    <main className="min-h-screen relative overflow-hidden text-white selection:bg-[#7C5CFF]/30 selection:text-[#7C5CFF] bg-[#090A0F]">
+      <ParallaxBackground />
+      <div className="relative px-2 sm:px-0">
+        <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <Lock className="w-6 h-6 text-[#F59E0B]" /> За кулисами
+        </h1>
 
       <div className="rounded-2xl border border-white/10 bg-[#14171F] p-3 sm:p-4 mb-6 space-y-3 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
         <h2 className="text-sm font-semibold text-[#8B93A7]">
