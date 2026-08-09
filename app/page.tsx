@@ -6,7 +6,6 @@ import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import type { LeaderboardEntry, UserProfile } from "@/types/hub";
 import { syncUserProfile, fetchTopLeaderboard, loginWithOAuth, logoutUser } from "@/lib/api/hub";
 import {
-  ParallaxBackground,
   HeroSection,
   CommandCenterSection,
   CommunityPulseSection,
@@ -64,9 +63,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen text-white pt-24 pb-20 px-4 sm:px-6 relative overflow-hidden selection:bg-[#7C5CFF]/30 selection:text-[#7C5CFF]">
-      <ParallaxBackground />
-
-      <div className="max-w-6xl mx-auto space-y-16">
+      <div className="max-w-6xl mx-auto space-y-16 relative z-10">
         <HeroSection user={user} profile={profile} onLogin={handleLogin} onLogout={handleLogout} />
         <CommandCenterSection />
         <CommunityPulseSection user={user} profile={profile} />

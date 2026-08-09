@@ -23,7 +23,7 @@ import {
   Link2,
   Check,
 } from "lucide-react";
-import { ParallaxBackground, BreathingCard } from "@/components/hub";
+import { BreathingCard } from "@/components/hub";
 
 interface Profile {
   id: string;
@@ -307,8 +307,6 @@ export default function InterviewPage() {
 
   return (
     <main className="min-h-screen text-white pt-24 pb-20 px-4 sm:px-6 relative overflow-hidden selection:bg-[#3B82F6]/30 selection:text-[#3B82F6]">
-      <ParallaxBackground />
-
       <div className="max-w-4xl mx-auto space-y-10 relative z-10">
         {/* Hero-заголовок */}
         <BreathingCard className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#12151E]/70 backdrop-blur-xl p-8 sm:p-12 shadow-2xl">

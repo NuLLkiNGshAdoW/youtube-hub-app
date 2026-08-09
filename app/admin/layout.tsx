@@ -1,4 +1,6 @@
 // app/admin/layout.tsx
+"use client";
+
 import Link from "next/link";
 import {
   MessageCircle,
@@ -20,8 +22,8 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#0B0D12] text-white flex">
-      <aside className="w-64 border-r border-white/10 p-4 fixed h-screen">
+    <div className="min-h-screen relative overflow-hidden text-white flex">
+      <aside className="w-64 border-r border-white/10 p-4 fixed h-screen bg-[#090A0F]/80 backdrop-blur-xl shadow-[0_0_0_1px_rgba(255,255,255,0.08)] z-20">
         <h2 className="text-lg font-bold mb-6 text-[#3B82F6]">Админ-панель</h2>
         <nav className="space-y-1">
           {navItems.map((item) => (
