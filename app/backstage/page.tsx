@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { User } from "@supabase/supabase-js";
 import { Lock, Film, Code, Sparkles, ShieldAlert } from "lucide-react";
 
 export interface BackstagePost {
@@ -16,6 +15,7 @@ export interface BackstagePost {
 
 export default function BackstagePage() {
   const [posts, setPosts] = useState<BackstagePost[]>([]);
+  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string; title: string; thumbnail: string; published_at: string }>>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [userRole, setUserRole] = useState<string>("viewer");
 
@@ -27,7 +27,6 @@ export default function BackstagePage() {
     try {
       setLoading(true);
 
-      // 1. Получаем роль текущего пользователя из profiles
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
@@ -41,16 +40,20 @@ export default function BackstagePage() {
         }
       }
 
-      // 2. Загружаем посты из backstage_posts
-      const { data, error } = await supabase
-        .from("backstage_posts")
-        .select("*")
-        .order("published_at", { ascending: false });
+      const [{ data, error }, youtubeResponse] = await Promise.all([
+        supabase.from("backstage_posts").select("*").order("published_at", { ascending: false }),
+        fetch("/api/youtube", { cache: "no-store" }),
+      ]);
 
       if (error) {
         console.error("Ошибка при загрузке backstage постов:", error.message);
       } else if (data) {
         setPosts(data as BackstagePost[]);
+      }
+
+      if (youtubeResponse.ok) {
+        const youtubeData = await youtubeResponse.json();
+        setYoutubeVideos((youtubeData.items || []).slice(0, 4));
       }
     } catch (err) {
       console.error("Ошибка:", err);
@@ -92,21 +95,57 @@ export default function BackstagePage() {
           <div className="inline-block w-8 h-8 border-2 border-[#F59E0B] border-t-transparent rounded-full animate-spin mb-3"></div>
           <p className="text-xs">Загрузка эксклюзивного контента...</p>
         </div>
-      ) : posts.length === 0 ? (
-        <div className="text-center text-[#8B93A7] py-16 border border-dashed border-white/10 rounded-2xl">
-          <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50 text-[#F59E0B]" />
-          <p className="text-sm">Эксклюзивных постов пока нет. Следите за обновлениями!</p>
-        </div>
       ) : (
-        <div className="grid md:grid-cols-2 gap-6">
-          {posts.map((post) => {
-            const isUnlocked = hasAccess(post.min_role);
+        <>
+          {youtubeVideos.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Film className="w-4 h-4 text-[#F59E0B]" />
+                <h2 className="text-lg font-semibold text-white">Свежие ролики с канала</h2>
+              </div>
 
-            return (
-              <div
-                key={post.id}
-                className="rounded-2xl border border-white/10 bg-[#14171F] overflow-hidden transition-all hover:border-white/20"
-              >
+              <div className="grid md:grid-cols-2 gap-6">
+                {youtubeVideos.map((video) => (
+                  <div key={video.id} className="rounded-2xl border border-white/10 bg-[#14171F] overflow-hidden transition-all hover:border-white/20">
+                    <div className="aspect-video bg-[#0B0D12]">
+                      <iframe
+                        src={`https://www.youtube-nocookie.com/embed/${video.id}`}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                    <div className="p-5">
+                      <h3 className="font-bold text-white text-base mb-2">{video.title}</h3>
+                      <p className="text-xs text-[#8B93A7]">
+                        {new Date(video.published_at).toLocaleDateString("ru-RU", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {posts.length === 0 ? (
+            <div className="text-center text-[#8B93A7] py-16 border border-dashed border-white/10 rounded-2xl">
+              <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50 text-[#F59E0B]" />
+              <p className="text-sm">Эксклюзивных постов пока нет. Следите за обновлениями!</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-6">
+              {posts.map((post) => {
+                const isUnlocked = hasAccess(post.min_role);
+
+                return (
+                  <div
+                    key={post.id}
+                    className="rounded-2xl border border-white/10 bg-[#14171F] overflow-hidden transition-all hover:border-white/20"
+                  >
                 {/* Медиа превью / Видео */}
                 <div className="aspect-video bg-[#0B0D12] flex items-center justify-center relative overflow-hidden">
                   {isUnlocked ? (
@@ -139,28 +178,30 @@ export default function BackstagePage() {
                   </span>
                 </div>
 
-                {/* Информация о посте */}
-                <div className="p-5">
-                  <div className="flex items-center justify-between text-[10px] text-[#8B93A7] font-mono mb-2">
-                    <span>
-                      {new Date(post.published_at).toLocaleDateString("ru-RU", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </span>
+                    {/* Информация о посте */}
+                    <div className="p-5">
+                      <div className="flex items-center justify-between text-[10px] text-[#8B93A7] font-mono mb-2">
+                        <span>
+                          {new Date(post.published_at).toLocaleDateString("ru-RU", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-white text-base mb-2">{post.title}</h3>
+                      {post.body && (
+                        <p className="text-xs text-[#8B93A7] leading-relaxed line-clamp-3">
+                          {post.body}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <h3 className="font-bold text-white text-base mb-2">{post.title}</h3>
-                  {post.body && (
-                    <p className="text-xs text-[#8B93A7] leading-relaxed line-clamp-3">
-                      {post.body}
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </main>
   );

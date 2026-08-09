@@ -21,7 +21,7 @@ function parseFeedItems(xml: string) {
 
       return {
         id,
-        title,
+        title: title.replace(/\u00e3\u008f/g, ""),
         thumbnail,
         published_at,
       };
@@ -47,7 +47,8 @@ export async function GET() {
       return NextResponse.json({ items: [] }, { status: response.status });
     }
 
-    const xml = await response.text();
+    const xmlBuffer = await response.arrayBuffer();
+    const xml = new TextDecoder("utf-8").decode(xmlBuffer);
     const items = parseFeedItems(xml).slice(0, 4);
 
     return NextResponse.json({ items });
