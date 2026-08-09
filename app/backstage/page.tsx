@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { Lock, Film, Code, Sparkles, ShieldAlert } from "lucide-react";
+import { Lock, Film, Code, Sparkles } from "lucide-react";
 
 export interface BackstagePost {
   id: number;
@@ -17,7 +17,6 @@ export default function BackstagePage() {
   const [posts, setPosts] = useState<BackstagePost[]>([]);
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string; title: string; thumbnail: string; published_at: string }>>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [userRole, setUserRole] = useState<string>("viewer");
 
   useEffect(() => {
     fetchBackstagePosts();
@@ -26,19 +25,6 @@ export default function BackstagePage() {
   const fetchBackstagePosts = async () => {
     try {
       setLoading(true);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-
-        if (profile) {
-          setUserRole(profile.role);
-        }
-      }
 
       const [{ data, error }, youtubeResponse] = await Promise.all([
         supabase.from("backstage_posts").select("*").order("published_at", { ascending: false }),
@@ -62,18 +48,26 @@ export default function BackstagePage() {
     }
   };
 
-  // Иерархия ролей для проверки доступа
-  const rolesPriority: Record<string, number> = {
-    viewer: 1,
-    member: 2,
-    vip: 3,
-    admin: 4,
-  };
+  const getMediaUrl = (url: string | null) => {
+    if (!url) return null;
 
-  const hasAccess = (minRole: string) => {
-    const userRank = rolesPriority[userRole] || 1;
-    const requiredRank = rolesPriority[minRole] || 1;
-    return userRank >= requiredRank;
+    const trimmed = url.trim();
+
+    if (/youtube\.com\/watch\?v=([^&\s]+)/i.test(trimmed)) {
+      const videoId = trimmed.match(/youtube\.com\/watch\?v=([^&\s]+)/i)?.[1];
+      return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : null;
+    }
+
+    if (/youtu\.be\/([^?&\s]+)/i.test(trimmed)) {
+      const videoId = trimmed.match(/youtu\.be\/([^?&\s]+)/i)?.[1];
+      return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : null;
+    }
+
+    if (/youtube\.com\/embed\/|youtube-nocookie\.com\/embed\//i.test(trimmed)) {
+      return trimmed;
+    }
+
+    return trimmed;
   };
 
   return (
@@ -139,7 +133,9 @@ export default function BackstagePage() {
           ) : (
             <div className="grid md:grid-cols-2 gap-6">
               {posts.map((post) => {
-                const isUnlocked = hasAccess(post.min_role);
+                const mediaUrl = getMediaUrl(post.video_url);
+                const isImage = Boolean(mediaUrl && /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(mediaUrl));
+                const isVideo = Boolean(mediaUrl && (mediaUrl.includes("youtube") || mediaUrl.includes("youtu.be") || mediaUrl.includes("vimeo") || mediaUrl.includes("mp4") || mediaUrl.includes("video")));
 
                 return (
                   <div
@@ -147,33 +143,46 @@ export default function BackstagePage() {
                     className="rounded-2xl border border-white/10 bg-[#14171F] overflow-hidden transition-all hover:border-white/20"
                   >
                 {/* Медиа превью / Видео */}
-                <div className="aspect-video bg-[#0B0D12] flex items-center justify-center relative overflow-hidden">
-                  {isUnlocked ? (
-                    post.video_url ? (
-                      <iframe
-                        src={post.video_url}
-                        className="w-full h-full border-0"
-                        allowFullScreen
-                      />
+                <div className="aspect-video bg-[#0B0D12] flex items-center justify-center relative overflow-hidden rounded-t-2xl">
+                  {mediaUrl ? (
+                    isVideo ? (
+                      <div className="w-full h-full bg-black/20">
+                        <iframe
+                          src={mediaUrl}
+                          className="w-full h-full border-0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          loading="lazy"
+                        />
+                      </div>
+                    ) : isImage ? (
+                      <div className="w-full h-full relative">
+                        <img
+                          src={mediaUrl}
+                          alt={post.title}
+                          className="w-full h-full object-cover object-center"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+                      </div>
                     ) : (
-                      <div className="flex flex-col items-center gap-2 text-[#7C5CFF]">
-                        <Code className="w-10 h-10" />
-                        <span className="text-xs font-mono">DEVLOG</span>
+                      <div className="w-full h-full relative">
+                        <img
+                          src={mediaUrl}
+                          alt={post.title}
+                          className="w-full h-full object-cover object-center"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
                       </div>
                     )
                   ) : (
-                    /* Блок закрытого доступа */
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-4">
-                      <ShieldAlert className="w-10 h-10 text-[#F59E0B] mb-2" />
-                      <p className="text-xs font-bold text-white mb-1">Доступ ограничен</p>
-                      <p className="text-[11px] text-[#8B93A7]">
-                        Требуется роль <span className="text-[#F59E0B] font-mono">{post.min_role}</span> или выше
-                      </p>
+                    <div className="flex flex-col items-center gap-2 text-[#7C5CFF]">
+                      <Code className="w-10 h-10" />
+                      <span className="text-xs font-mono">DEVLOG</span>
                     </div>
                   )}
 
                   {/* Бейдж роли */}
-                  <span className="absolute top-3 left-3 bg-[#F59E0B]/20 border border-[#F59E0B]/30 text-[#F59E0B] text-[10px] font-mono px-2.5 py-1 rounded-full uppercase">
+                  <span className="absolute top-3 left-3 bg-[#F59E0B]/20 border border-[#F59E0B]/30 text-[#F59E0B] text-[10px] font-mono px-2.5 py-1 rounded-full uppercase backdrop-blur-sm">
                     {post.min_role}
                   </span>
                 </div>
